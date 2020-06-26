@@ -1,0 +1,325 @@
+<!--блок head-->
+{% block links %}    
+    {% load static %}
+    <head>      
+        <script src="{%static 'js/ajax/jquery.min.js'%}"></script>
+        
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="{%static 'css/bootstrap.min.css'%}">
+
+        <link rel="stylesheet" href="{%static 'css/main.css'%}">
+        
+        <script src="{%static 'js/bootstrap.min.js'%}"></script>
+        
+        <script src="{%static 'js/popper.js'%}"></script>
+        <script src="{%static 'js/main.js'%}"></script>
+        <link rel="stylesheet" href="{%static 'css/sidebar.css'%}">
+        <link rel="stylesheet" href="{%static 'css/style.css'%}">
+        <link rel="icon" href="{%static 'images/logo-cuted.png'%}">
+        <link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700,800,900" rel="stylesheet">
+		
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+
+        <link rel="stylesheet" type="text/css" href="{%static 'css/util.css'%}">
+        <link rel="stylesheet" type="text/css" href="{%static 'css/portfolio.css'%}">
+
+        
+
+        <script src="{% static 'datatables/buttons/js/jquery.dataTables.min.js'%}"></script>
+        <script src="{% static 'datatables/buttons/js/dataTables.buttons.min.js'%}"></script>
+
+        <script src="{% static 'datatables/buttons/js/buttons.flash.min.js'%}"></script>
+        <script src="{% static 'datatables/buttons/js/jszip.min.js'%}"></script>
+        <script src="{% static 'datatables/buttons/js/pdfmake.min.js'%}"></script>
+        <script src="{% static 'datatables/buttons/js/vfs_fonts.js'%}"></script>
+        <script src="{% static 'datatables/buttons/js/buttons.html5.min.js'%}"></script>
+        <script src="{% static 'datatables/buttons/js/buttons.print.min.js'%}"></script>
+        
+
+        <link rel="stylesheet" type="text/css" href="{% static 'datatables/buttons/css/jquery.dataTables.min.css'%}">
+        <link rel="stylesheet" type="text/css" href="{% static 'datatables/buttons/css/buttons.dataTables.min.css'%}">
+        
+        {% block styles %}
+
+        {% endblock %}
+    </head>
+{% endblock %}
+
+{% block body%}
+    <body>
+        <div class="wrap">
+            <!--header для каждой странички-->
+            {% block header %}
+                
+                <div class="sidebar-parent-block">
+                    <nav class="sidebar">
+                        <div class="sidebar-content">
+                        <div class="sidebar-header">
+                            <div class="arrow-navigation"><img alt="" src="{%static 'images/icons/arrow-right.png'%}" id="arrow"
+                                style="width: 20px;"></div>
+                            <a href="#"><img alt="" class="mystat-img" src="{%static 'images/logo-cuted.png'%}" style="width: 100px;"></a>
+                        </div>
+                        <div>
+                            <ul class="sidebar-nav">
+                            <li class="profile-item ">
+                                <a routerlinkactive="active" href="{% url 'main:visits'%}" >
+                                <span class="side-text {%block header_button2%} {% endblock %}">Посещения</span>
+                                <div class="close-hover"> Посещения </div>
+                                </a>
+                            </li>
+                            <li class="camera-item ">
+                                <a routerlinkactive="active" href="{% url "main:show_stream"%}" >
+                                <span class="side-text {%block header_button3%} {% endblock %}">Трансляция</span>
+                                <div class="close-hover"> Трансляция </div>
+                                </a>
+                            </li>
+                            {% if request.session.role == "main_admin" %}
+                                <li class="remove-item ">
+                                    <a routerlinkactive="active" href="{% url 'main:delete_student'%}" >
+                                    <span class="side-text {%block header_button4%} {% endblock %}">Удалить студента</span>
+                                    <div class="close-hover"> Удалить студента </div>
+                                    </a>
+                                </li>
+                                <li class="add-item ">
+                                    <a routerlinkactive="active" href="{% url 'main:add_student'%}" >
+                                    <span class="side-text {%block header_button5%} {% endblock %}">Добавить студента</span>
+                                    <div class="close-hover"> Добавить студента </div>
+                                    </a>
+                                </li>
+                                <li class="remove-item ">
+                                    <a routerlinkactive="active" href="{% url 'main:delete_security'%}" >
+                                    <span class="side-text {%block header_button7%} {% endblock %}">Удалить охранника</span>
+                                    <div class="close-hover"> Удалить охранника </div>
+                                    </a>
+                                </li>
+                                <li class="add-item ">
+                                    <a routerlinkactive="active" href="{%url 'main:add_security'%}" >
+                                    <span class="side-text {%block header_button6%} {% endblock %}">Добавить охранника</span>
+                                    <div class="close-hover"> Добавить охранника </div>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            </ul>
+
+                        </div>
+                        </div>
+                    </nav>
+                </div>
+
+                <div class="sidebar-parent-top-block">
+                    <nav class="sidebar" id="mobile-nav">
+                        <div class="sidebar-content">
+                        <div class="sidebar-header">
+                            <div class="arrow-navigation"><img alt="" id="arrow-mobile" style="width: 30px; margin-top: 15px;"
+                                src="{%static 'images/icons/down-arrow.png'%}"></div>
+                            <a href="#"><img alt="" class="mystat-img-mobile" src="{%static 'images/logo.png'%}" style="width: 100px;"></a>
+                        </div>
+
+                        <div id="mobile-sidebar" class="open-sidebar">
+                            
+                            <div id="mobile-sidebar" class="open-sidebar">           
+                            <ul class="sidebar-nav">
+                            <li class="profile-item ">
+                                <a routerlinkactive="active" href="{% url 'main:visits'%}" >
+                                <span class="side-text">Посещения</span>
+                                <div class="close-hover"> Посещения </div>
+                                </a>
+                            </li>
+                            <li class="camera-item ">
+                                <a routerlinkactive="active" href="{% url "main:show_stream"%}" >
+                                <span class="side-text">Трансляция</span>
+                                <div class="close-hover"> Трансляция </div>
+                                </a>
+                            </li>
+                            {% if request.session.role == "main_admin" %}
+                                <li class="remove-item">
+                                    <a routerlinkactive="active" href="{% url 'main:delete_student'%}" >
+                                    <span class="side-text">Удалить студента</span>
+                                    <div class="close-hover"> Удалить студента </div>
+                                    </a>
+                                </li>
+                                <li class="add-item">
+                                    <a routerlinkactive="active" href="{% url 'main:add_student'%}" >
+                                    <span class="side-text">Добавить студента</span>
+                                    <div class="close-hover"> Добавить студента </div>
+                                    </a>
+                                </li>
+                                <li class="remove-item">
+                                    <a routerlinkactive="active" href="{% url 'main:delete_security'%}" >
+                                    <span class="side-text">Удалить охранника</span>
+                                    <div class="close-hover"> Удалить охранника </div>
+                                    </a>
+                                </li>
+                                <li class="add-item ">
+                                    <a routerlinkactive="active" href="{%url 'main:add_security'%}" >
+                                    <span class="side-text">Добавить охранника</span>
+                                    <div class="close-hover"> Добавить охранника </div>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            </ul>
+                        </div>
+                            <ul class="sidebar-nav">
+                            <li class="profile-item ">
+                                <a routerlinkactive="active" href="{% url 'main:visits'%}" >
+                                <span class="side-text {%block header_button9%} {% endblock %}">Посещения</span>
+                                <div class="close-hover"> Посещения </div>
+                                </a>
+                            </li>
+                            <li class="camera-item ">
+                                <a routerlinkactive="active" href="{% url "main:show_stream"%}" >
+                                <span class="side-text {%block header_button10%} {% endblock %}">Трансляция</span>
+                                <div class="close-hover"> Трансляция </div>
+                                </a>
+                            </li>
+                            {% if request.session.role == "main_admin" %}
+                                <li class="remove-item ">
+                                    <a routerlinkactive="active" href="{% url 'main:delete_student'%}" >
+                                    <span class="side-text {%block header_button11%} {% endblock %}">Удалить студента</span>
+                                    <div class="close-hover"> Удалить студента </div>
+                                    </a>
+                                </li>
+                                <li class="add-item ">
+                                    <a routerlinkactive="active" href="{% url 'main:add_student'%}" >
+                                    <span class="side-text {%block header_button12%} {% endblock %}">Добавить студента</span>
+                                    <div class="close-hover"> Добавить студента </div>
+                                    </a>
+                                </li>
+                                <li class="remove-item ">
+                                    <a routerlinkactive="active" href="{% url 'main:delete_security'%}" >
+                                    <span class="side-text {%block header_button14%} {% endblock %}">Удалить охранника</span>
+                                    <div class="close-hover"> Удалить охранника </div>
+                                    </a>
+                                </li>
+                                <li class="add-item ">
+                                    <a routerlinkactive="active" href="{%url 'main:add_security'%}" >
+                                    <span class="side-text {%block header_button13%} {% endblock %}">Добавить охранника</span>
+                                    <div class="close-hover"> Добавить охранника </div>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            <form action="{%url 'main:logout'%}" method="post">{% csrf_token %}
+                                <li class="exit-item">
+                                    <a routerlinkactive="active" class="">
+                                        <button type="submit" class="side-text">Выйти</button>
+                                    </a>
+                                </li>
+                            </form>
+                            </ul>
+                        </div>
+                        </div>
+                    </nav>
+                </div>
+                
+            {% endblock %}
+            
+            
+            
+            <!--содержимое для каждой странички-->
+            {% block body_content %}
+                <div class="content" style="">
+                    <nav class="navbar navbar-expand-lg navbar-light {% if success or upload_error or nomargin %}m-0{% endif %}" id="none">
+                        <div class="container-fluid">
+                            <div class=" navbar-collapse" style="text-align: center;" id="navbarSupportedContent">
+                                <a style="color:white;" class="header-title" href="#">ShagFace</a>
+                                <ul class="nav navbar-nav ml-auto">
+                                    <li class="nav-item m-r-30">
+                                        <img src="{%static "images/user.png"%}" class="nav-image inline-block" alt="" style="height:30px;width:30px;"> 
+                                        {% if request.session.role == "admin"%}
+                                            <a class="nav-link inline-block" href="#">{{user.email}}</a>
+                                        {%else%}
+                                            <a class="nav-link inline-block" href="#">{{user.username}}</a>
+                                        {%endif%}
+                                    </li>
+                                    <li class="nav-item">
+                                        <form action="{% url 'main:logout'%}" method="post">{% csrf_token %}
+                                            <button type="submit" class="nav-link m-t-10" href="{%url 'main:logout'%}"><img style="width: 20px;" src="{%static 'images/icons/logout-white.png'%}"alt=""></button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </nav>
+
+                    {% block notification%}
+                    
+                    {% endblock %}
+
+                    {% block content%}
+
+                    {%endblock%}
+                </div>
+            {% endblock %}
+
+        </div>
+    </body>
+{% endblock %}
+
+{% block footer %}
+
+    <!-- Место для футера -->
+
+    <!-- Место для футера -->
+
+    
+    <script src="{%static 'js/search.js'%}"></script>
+    <script src="{%static 'js/sidebar.js'%}"></script>
+    <style type="text/css">
+        #hellopreloader>p {
+        display: none;
+        }
+
+        #hellopreloader_preload {
+        display: block;
+        position: fixed;
+        z-index: 99999;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        min-width: 100px;
+        background: #1e6cc7 url({%static 'gif/preloader.gif'%}) center center no-repeat;
+        background-size: 50%;
+        }
+    </style>
+    <div id="hellopreloader">
+        <div id="hellopreloader_preload"></div>
+        <p><a href="http://hello-site.ru">Hello-Site.ru. Бесплатный конструктор сайтов.</a></p>
+    </div>
+    <script type="text/javascript">
+        var hellopreloader = document.getElementById("hellopreloader_preload");
+
+        function fadeOutnojquery(el) {
+        el.style.opacity = 1;
+        var interhellopreloader = setInterval(function () {
+            el.style.opacity = el.style.opacity - 0.05;
+            if (el.style.opacity <= 0.05) {
+            clearInterval(interhellopreloader);
+            hellopreloader.style.display = "none";
+            document.getElementsByTagName("html")[0].style.overflow = "";
+            }
+        }, 16);
+        }
+        window.onload = function () {
+
+
+        setTimeout(function () {
+            fadeOutnojquery(hellopreloader);
+        }, 100);
+        };
+
+       
+        var cw = $('.achivement-img').width();
+        $('.achivement-img').css({'height':cw+'px'});
+    </script>
+    <script type="text/javascript">
+        var cw = $('.achivement-img').width();
+        $('.achivement-img').css({'height':cw+'px'});
+    </script>
+
+    {% block scripts %}
+
+    {% endblock %}
+{% endblock %}

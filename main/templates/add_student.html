@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% load static %}
+
+{%block styles %}
+    <title>ShagFace</title>
+    <script src="{%static 'js/popper.js'%}"></script>
+    <script src="{%static 'js/main.js'%}"></script>
+    <link rel="stylesheet" href="{%static 'css/search.css'%}">
+    <link rel="stylesheet" href="{%static 'css/pagination.css'%}">
+    <link rel="stylesheet" href="{%static 'css/main.css'%}">
+{% endblock %}
+
+{% block header_butto12 %}active{% endblock %}
+{% block header_button5 %}active{% endblock %}
+
+
+{% block content %}
+
+    <span class="title-text">Добавить студента</span>
+
+    <div class="col-xl-6 col-sm-12">
+        <div class="form-group">
+            <div class="wrap-input100 validate-input m-b-16 col-xl-12 col-sm-12 p-0">                                            
+                <div class="card shadow-sm x-shadow-fade-in">
+                    <input type="text" class="input100" required name="fullname" id="fullname" placeholder=" Ф.И.О" title=" Ф.И.О">
+                    <span class="focus-input100"></span>  
+                </div>                                            
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="wrap-input100 validate-input m-b-16 col-xl-12 col-sm-12 p-0">                        
+                <div class="card shadow-sm x-shadow-fade-in">
+                    <input type="email" name="email" class="input100" required name="email" id="email" placeholder="Email" title="Ваш Email">
+                    <span class="focus-input100"></span> 
+                </div>                                            
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="wrap-input100 validate-input m-b-16 col-xl-12 col-sm-12 p-0">                                           
+                <div class="card shadow-sm x-shadow-fade-in">
+                    <input type="text" name="parent_number" class="input100" required id="parent_number"  placeholder="Телефон родителя" title="Телефон родителя">
+                    <span class="focus-input100"></span>
+                </div>                                            
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="wrap-input100 validate-input m-b-16 col-xl-12 col-sm-12 p-0">                                           
+                <div class="card shadow-sm x-shadow-fade-in">
+                    <input type="text" name="parent_telegram" class="input100" required id="parent_telegram"  placeholder="Телеграм родителя" title="Телеграм родителя">
+                    <span class="focus-input100"></span>
+                </div>                                            
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="wrap-input100 validate-input m-b-16 col-xl-12 col-sm-12 p-0">                                           
+                <div class="card shadow-sm x-shadow-fade-in">
+                    <input type="text" name="group" class="input100" required id="group"  placeholder="Группа" title="Группа">
+                    <span class="focus-input100"></span>
+                </div>                                            
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="wrap-input100 validate-input m-b-16 col-xl-12 col-sm-12 p-0">                                           
+                <div class="card shadow-sm x-shadow-fade-in">
+                    <input type="text" name="course" class="input100" required id="course"  placeholder="Курс" title="Курс">
+                    <span class="focus-input100"></span>
+                </div>                                            
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-6 col-sm-12">
+                                            
+        <div class="camera-panel-student" id="camera-panel">
+            <form action='{% url "main:start_student_stream"%}' method="POST">{% csrf_token %}
+                <img class="start-video-student" id="start" src="{% static "images/icons/camera-icons/play.png"%}" title="Start Stream"/>
+            </form>
+        </div>
+        
+
+        <div class="form-group">
+            <img style="-webkit-user-select: none;" class="cam-stream-student" id="stream" src="{% url "main:student_stream"%}">            
+        </div>
+
+        <div class="form-group">
+            <img style="-webkit-user-select: none;" class="cam-stream-student" id="face_position" src="{% static "preview_faces/face1.jpg"%}">            
+        </div>
+
+        <div class="form-group">
+            <span>Смотрите в камеру под разными углами</span>
+        </div>
+    </div>    
+
+{% endblock %}
+
+{% block scripts %}
+    <script type="text/javascript">
+        function sleep(sec) {
+           return new Promise(resolve => setTimeout(resolve, sec*1000));
+        }
+        
+
+        $("#start").on("click", function(){
+            var fullname = $("#fullname")[0].value
+            var email = $("#email")[0].value
+            var parent_telegram = $("#parent_telegram")[0].value
+            var parent_number = $("#parent_number")[0].value
+            var group = $("#group")[0].value
+            var course = $("#course")[0].value
+
+            if(fullname.length == 0 || email.length == 0 || parent_telegram.length == 0 || parent_number.length == 0 || group.length == 0 || course.length == 0){
+                alert("Заполните данные о студенте прежде чем снимать его лицо!")
+                return;
+            }
+
+            $.ajax({
+                url: '{% url "main:start_student_stream"%}',
+                data: {
+                'csrfmiddlewaretoken': $('input[name="csrfmiddlewaretoken"]').val(),
+                'fullname': fullname,
+                'email': email,
+                'parent_number': parent_number,
+                'parent_telegram': parent_telegram,
+                'group': group,
+                'course': course,
+                },
+                type: "POST",
+                dataType: 'json',
+                success: async function (data) {
+                    if(data["error"]){
+                        alert(data["error"])
+                    }else{
+                        await sleep(1)
+                        for(var i = 1; i <= 5; i++){
+                            $("#face_position")[0].src = "http://127.0.0.1:8000/static/preview_faces/face" + i + ".jpg"
+                            await sleep({{TIME_TO_WAIT}})
+                        }
+                    }
+                }
+            });
+        })
+    </script>
+{%endblock%}
