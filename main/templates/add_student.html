@@ -79,7 +79,7 @@
         
 
         <div class="form-group">
-            <img style="-webkit-user-select: none;" class="cam-stream-student" id="stream" src="{% url "main:student_stream"%}">            
+            <img style="-webkit-user-select: none;" class="cam-stream-student" id="stream" src="">            
         </div>
 
         <div class="form-group">
@@ -130,6 +130,7 @@
                     if(data["error"]){
                         alert(data["error"])
                     }else{
+                        $("#stream")[0].src = '{% url "main:student_stream"%}';
                         await sleep(1)
                         for(var i = 1; i <= 5; i++){
                             $("#face_position")[0].src = "http://127.0.0.1:8000/static/preview_faces/face" + i + ".jpg"
