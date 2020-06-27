@@ -35,7 +35,6 @@ BOT_TOKEN = '1177034661:AAFVqYs1e-9SkTuu-4EAUp39snBp79b0KzQ'
 # Application definition
 
 INSTALLED_APPS = [
-    'telegrambot.apps.TelegrambotConfig',
     'main.apps.MainConfig',
     'django.contrib.admin',
     'django.contrib.auth',
