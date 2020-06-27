@@ -121,6 +121,8 @@ class Login(View):
             
 class AddSecurity(View):
     def get(self, request):
+        if not get_current_user(request):
+            return redirect(reverse('main:login'))
         return render(request, 'add_security.html', {
             "user": get_current_user(request),  
             "nomargin": True,
@@ -146,6 +148,8 @@ class AddSecurity(View):
 
 class DeleteSecurity(View):
     def get(self, request):
+        if not get_current_user(request):
+            return redirect(reverse('main:login'))
         securities = Security.objects.all()
         return render(request, 'delete_security.html', {
             "user": get_current_user(request),  
@@ -167,6 +171,9 @@ class DeleteSecurity(View):
 
 class DeleteStudent(View):
     def get(self, request):
+        if not get_current_user(request):
+            return redirect(reverse('main:login'))
+
         students = Student.objects.all()
         return render(request, 'delete_student.html', {
             "user": get_current_user(request),  
@@ -193,6 +200,9 @@ class Visits(View):
         BotAction.bot = Bot()
         
     def get(self, request):
+        if not get_current_user(request):
+            return redirect(reverse('main:login'))
+
         return render(request, 'visits.html', {
             "user": get_current_user(request),  
             "nomargin": True,
