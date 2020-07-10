@@ -1,17 +1,28 @@
 import cv2
 import numpy as np
 import os
+import io
 from django.contrib.staticfiles.storage import staticfiles_storage
 from ..models import Security, Student, Visit, Face, BotUser
 import pathlib
 import datetime
 from PIL import ImageFont, ImageDraw, Image
+import base64 
 
 uppath = lambda _path, n: os.sep.join(_path.split(os.sep)[:-n])
 
 
 class BotAction():
     bot = None
+
+def stringToImage(base64_string):
+    imgdata = base64.b64decode(base64_string)
+    return Image.open(io.BytesIO(imgdata))
+
+def from_base64(base64_data):
+    img = base64.b64decode(base64_data)
+    nparr = np.fromstring(img, np.uint8)
+    return cv2.imdecode(nparr, cv2.IMREAD_ANYCOLOR)
 
 
 def getImagesAndLabels():
@@ -89,13 +100,13 @@ def recognise_face(img):
             img_pil = Image.fromarray(img)
             draw = ImageDraw.Draw(img_pil)
             draw.text((x-40, y - 20),  label, font = font, fill = (b, g, r, a))
-            img = np.array(img_pil)
+            #img = np.array(img_pil)
             
             confidence = "  {0}%".format(round(100 - confidence))
-        print(confidence)
+        
         #cv2.putText(img, str(confidence), (x + 5, y + h - 5), font, 1, (255, 255, 0), 1)
-    ret, jpeg = cv2.imencode('.jpg', img)
-    return jpeg.tobytes()
+    ret, jpeg = cv2.imencode('.png', img)
+    return base64.b64encode(jpeg)
 
 def recognise_face_without_title(img):
     font = cv2.FONT_HERSHEY_SIMPLEX
@@ -113,8 +124,8 @@ def recognise_face_without_title(img):
 
     for (x, y, w, h) in faces:
         cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
-    ret, jpeg = cv2.imencode('.jpg', img)
-    return jpeg.tobytes()
+    ret, jpeg = cv2.imencode('.png', img)
+    return base64.b64encode(jpeg)
 
 def add_student(img, student, count):
     cascadePath = str(pathlib.Path(__file__).parent.absolute()) + "/haarcascade_frontalface_default.xml"
@@ -123,7 +134,7 @@ def add_student(img, student, count):
     faces = face_detector.detectMultiScale(gray, 1.3, 5)
     count_faces = 0
     if len(faces) > 1:
-        ret, jpeg = cv2.imencode('.jpg', img)
+        ret, jpeg = cv2.imencode('.png', img)
         return False, jpeg.tobytes()
 
     for (x,y,w,h) in faces:     
@@ -136,24 +147,21 @@ def add_student(img, student, count):
         print("path: " + path)
         cv2.imwrite(path, gray[y:y+h,x:x+w])
 
-    ret, jpeg = cv2.imencode('.jpg', img)
+    ret, jpeg = cv2.imencode('.png', img)
 
     if count_faces > 0:
-        return True, jpeg.tobytes()
+        return True, base64.b64encode(jpeg)
     else:
-        return False, jpeg.tobytes()
+        return False, base64.b64encode(jpeg)
     
 
 def create_blank(width, height, rgb_color=(0, 0, 0)):
-    # Create black blank image
     image = np.zeros((height, width, 3), np.uint8)
-    # Since OpenCV uses BGR, convert the color first
     color = tuple(reversed(rgb_color))
-    # Fill image with color
     image[:] = color
 
-    ret, jpeg = cv2.imencode('.jpg', image)
-    return jpeg.tobytes()
+    ret, jpeg = cv2.imencode('.png', image)
+    return base64.b64encode(jpeg)
 
 def delete_images(student):
     for face in student.images_urls.all():

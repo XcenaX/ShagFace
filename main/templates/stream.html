@@ -17,49 +17,75 @@
 {% block content %}
 
     <div class="camera-panel" id="camera-panel">
-        <form action='{%url "main:start_stop_stream"%}' method="POST">{% csrf_token %}
+        <form action='{% url "main:recognize_face"%}' method="POST">{% csrf_token %}
             <img class="start-video" id="start" src="{% static "images/icons/camera-icons/play.png"%}" title="Start Stream"/>
             <img class="start-video" id="stop" src="{% static "images/icons/camera-icons/stop.png"%}" title="Stop Stream"/>
         </form>
     </div>
-   
-    <img style="-webkit-user-select: none;" class="cam-stream" id="stream" src="{% url "main:stream"%}">
+    <video id="stream" style="display:none;"></video>
+    <img style="-webkit-user-select: none;" class="cam-stream"  id="img_stream" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=">
 
 {% endblock %}
 
 {% block scripts %}
     <script type="text/javascript">
-        
+        const FPS = 10;
+        // get video dom element
+        const video = document.getElementById('stream');
+        // get img dom element
+        var img = document.getElementById('img_stream');
+        // request access to webcam
+        var is_stop_stream = true;
+        navigator.mediaDevices.getUserMedia({video: {video:true, audio:false}}).then(function(stream){video.srcObject = stream; });
+        const canvas = document.createElement('canvas');
+        // returns a frame encoded in base64
+        const getFrame = () => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height)
+            const data = canvas.toDataURL('image/png');
+            return data;
+        }
+
+        function send_image(){
+            $.ajax({
+                url: '{% url "main:recognize_face"%}',
+                data: {
+                'csrfmiddlewaretoken': $('input[name="csrfmiddlewaretoken"]').val(),
+                'image': getFrame()
+                },
+                type: "POST",
+                dataType: 'json',
+                success: function (data) {
+                    if(!img.src.includes("static")){
+                        img.src = "data:image/png;base64," + data["image"].split("'")[1]    
+                    }
+                    
+                    //img.src = getFrame();
+                },
+                
+            });
+        }
         
 
         $("#start").on("click", function(){
-            $.ajax({
-                url: '{% url "main:start_stop_stream"%}',
-                data: {
-                'csrfmiddlewaretoken': $('input[name="csrfmiddlewaretoken"]').val(),
-                'is_stop': "false"
-                },
-                type: "POST",
-                dataType: 'json',
-                success: function (data) {
-                    
+            is_stop_stream = false;
+            img.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=";
+            video.play();
+            stream_interval = setInterval(function(){
+                if(!is_stop_stream){
+                    send_image();
                 }
-            });
+                else{
+                    clearInterval(stream_interval);           
+                }
+            }, 1000/FPS);
         })
 
         $("#stop").on("click", function(){
-            $.ajax({
-                url: '{% url "main:start_stop_stream"%}',
-                data: {
-                    'csrfmiddlewaretoken': $('input[name="csrfmiddlewaretoken"]').val(),
-                    'is_stop': "true"
-                },
-                type: "POST",
-                dataType: 'json',
-                success: function (data) {
-                   
-                }
-            });
+            video.pause();
+            is_stop_stream = true;
+            img.src = "{% static 'images/white.png'%}";     
         })
     </script>
 {%endblock%}

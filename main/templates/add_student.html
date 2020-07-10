@@ -17,6 +17,8 @@
 {% block content %}
 
     <span class="title-text">Добавить студента</span>
+    <span style="display:none;" id="count">1</span>
+    <span style="display:none;" id="is_paused">false</span>
 
     <div class="col-xl-6 col-sm-12">
         <div class="form-group">
@@ -35,22 +37,7 @@
                 </div>                                            
             </div>
         </div>
-        <div class="form-group">
-            <div class="wrap-input100 validate-input m-b-16 col-xl-12 col-sm-12 p-0">                                           
-                <div class="card shadow-sm x-shadow-fade-in">
-                    <input type="text" name="parent_number" class="input100" required id="parent_number"  placeholder="Телефон родителя" title="Телефон родителя">
-                    <span class="focus-input100"></span>
-                </div>                                            
-            </div>
-        </div>
-        <div class="form-group">
-            <div class="wrap-input100 validate-input m-b-16 col-xl-12 col-sm-12 p-0">                                           
-                <div class="card shadow-sm x-shadow-fade-in">
-                    <input type="text" name="parent_telegram" class="input100" required id="parent_telegram"  placeholder="Телеграм родителя" title="Телеграм родителя">
-                    <span class="focus-input100"></span>
-                </div>                                            
-            </div>
-        </div>
+        
         <div class="form-group">
             <div class="wrap-input100 validate-input m-b-16 col-xl-12 col-sm-12 p-0">                                           
                 <div class="card shadow-sm x-shadow-fade-in">
@@ -79,7 +66,8 @@
         
 
         <div class="form-group">
-            <img style="-webkit-user-select: none;" class="cam-stream-student" id="stream" src="">            
+            <img style="-webkit-user-select: none;" class="cam-stream-student" id="stream" >     
+            <video id="video" style="display:none;">       
         </div>
 
         <div class="form-group">
@@ -95,20 +83,130 @@
 
 {% block scripts %}
     <script type="text/javascript">
-        function sleep(sec) {
-           return new Promise(resolve => setTimeout(resolve, sec*1000));
+        const FPS = 10;
+        const video = document.getElementById('video');
+        const img = document.getElementById('stream');
+        const face_position = document.getElementById("face_position");
+
+        const numbers = [];
+
+        navigator.mediaDevices.getUserMedia({video: {video:true, audio:false}}).then(function(stream){video.srcObject = stream; });
+        const canvas = document.createElement('canvas');
+
+        const getFrame = () => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height)
+            const data = canvas.toDataURL('image/png');
+            return data;
+        }
+
+        
+        
+
+        function send_image(){
+            $.ajax({
+                url: '{% url "main:add_student"%}',
+                data: {
+                'csrfmiddlewaretoken': $('input[name="csrfmiddlewaretoken"]').val(),
+                'image': getFrame(),
+                "count": document.getElementById('count').textContent,
+                },
+                async: false,
+                type: "POST",
+                dataType: 'json',
+                success: function (data) {
+                    var IS_ADDED = data["is_added"];
+                    if(IS_ADDED == "True"){
+                        face_position.src = "/static/preview_faces/face" + document.getElementById('count').textContent + ".jpg";
+                        var count = parseInt(document.getElementById('count').textContent);
+                        if(!numbers.includes(count)){
+                            numbers.push(count);
+                        }
+                        count++;
+                        document.getElementById('count').textContent = count;
+                        document.getElementById('is_paused').textContent = "true";
+                        window.setTimeout(function () {
+                           document.getElementById('is_paused').textContent = "false";
+                        }, 3000);
+                    }
+                    img.src = "data:image/jpg;base64," + data["image"].split("'")[1]
+                    //img.src = getFrame();
+                }
+            });
+            
+        }
+
+        function recognize_face(){
+            $.ajax({
+                url: '{% url "main:recognize_face"%}',
+                data: {
+                'csrfmiddlewaretoken': $('input[name="csrfmiddlewaretoken"]').val(),
+                'image': getFrame()
+                },
+                type: "POST",
+                dataType: 'json',
+                success: function (data) {
+                    
+                    img.src = "data:image/png;base64," + data["image"].split("'")[1]
+                    //img.src = getFrame();
+                }
+            });
+        }
+
+        function train(){
+            $.ajax({
+                url: '{% url "main:train"%}',
+                data: {
+                'csrfmiddlewaretoken': $('input[name="csrfmiddlewaretoken"]').val(),
+                },
+                type: "POST",
+                dataType: 'json'
+            });
+        }
+
+        function set_current_student(student_id){
+            var is_added;
+            $.ajax({
+                url: '{% url "main:set_current_student"%}',
+                data: {
+                'csrfmiddlewaretoken': $('input[name="csrfmiddlewaretoken"]').val(),
+                "student_id": student_id
+                },
+                type: "POST",
+                dataType: 'json'
+            });
+        }
+
+        function start_stream(){
+            video.play();
+            stream_interval = setInterval(function(){
+                var is_paused = document.getElementById('is_paused').textContent;
+                if(is_paused === "false" && !numbers.includes(parseInt(document.getElementById('count').textContent))){
+                    if(parseInt(document.getElementById('count').textContent) <= 5){
+                    send_image();
+                    } else{
+                        video.pause();
+                        clearInterval(stream_interval);
+                        img.src = "{% static 'images/white.png'%}";
+                        train()
+                        alert("Студент успешно добавлен");
+                        document.getElementById('count').textContent = "1"
+                    }
+                } else{
+                    recognize_face();
+                }
+            }, 1000/FPS);
         }
         
 
         $("#start").on("click", function(){
             var fullname = $("#fullname")[0].value
             var email = $("#email")[0].value
-            var parent_telegram = $("#parent_telegram")[0].value
-            var parent_number = $("#parent_number")[0].value
             var group = $("#group")[0].value
             var course = $("#course")[0].value
 
-            if(fullname.length == 0 || email.length == 0 || parent_telegram.length == 0 || parent_number.length == 0 || group.length == 0 || course.length == 0){
+            if(fullname.length == 0 || email.length == 0 || group.length == 0 || course.length == 0){
                 alert("Заполните данные о студенте прежде чем снимать его лицо!")
                 return;
             }
@@ -119,8 +217,6 @@
                 'csrfmiddlewaretoken': $('input[name="csrfmiddlewaretoken"]').val(),
                 'fullname': fullname,
                 'email': email,
-                'parent_number': parent_number,
-                'parent_telegram': parent_telegram,
                 'group': group,
                 'course': course,
                 },
@@ -130,12 +226,10 @@
                     if(data["error"]){
                         alert(data["error"])
                     }else{
-                        $("#stream")[0].src = '{% url "main:student_stream"%}';
-                        await sleep(1)
-                        for(var i = 1; i <= 5; i++){
-                            $("#face_position")[0].src = "http://127.0.0.1:8000/static/preview_faces/face" + i + ".jpg"
-                            await sleep({{TIME_TO_WAIT}})
-                        }
+                        student_id = data["student_id"];
+                        img.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=";
+                        set_current_student(student_id);
+                        start_stream();
                     }
                 }
             });

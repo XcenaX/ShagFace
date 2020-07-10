@@ -10,8 +10,6 @@ class Student(models.Model):
     email = models.TextField(default="") 
     fullname= models.TextField(default="") 
     images_urls = models.ManyToManyField(Face, related_name='faces',  blank=True)
-    parent_number = models.TextField(default="")
-    parent_telegram = models.TextField(default="")
     group = models.TextField(default="")
     course = models.TextField(default="")
     def __str__(self):

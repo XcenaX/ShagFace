@@ -3,6 +3,10 @@ from django.urls import reverse
 from django.views import View
 from .models import Security, Student, Visit, Face
 import os
+import io
+from imageio import imread
+
+import base64
 
 from django.db.models import Q
 
@@ -37,12 +41,9 @@ from django.http import JsonResponse
 COUNT_BLOG_ON_PAGE = 50
 STUDENT_PHOTOS = 5
 TIME_TO_WAIT = 3 # Время которое пройдет после того как камера распознает студента чтобы показать следующую картинку
+CURRENT_STUDENT_TO_ADD = None
 
-cam = None
 class CameraAction():
-    IS_STOP = True
-    cam = cam
-    timed_value = TimedValue(TIME_TO_WAIT)
     current_student = None
 
 class Logout(View):
@@ -209,70 +210,32 @@ class Visits(View):
             "visits": Visit.objects.all()
         })
 
-def gen_student():
-    count = 1
-    while True:
-        if not CameraAction.IS_STOP and CameraAction.timed_value.has_time_passed() and count <= STUDENT_PHOTOS:
-            frame = CameraAction.cam.get_frame_as_image()
-            is_added, image = add_student(frame, CameraAction.current_student, count)
-            if is_added:
-                CameraAction.timed_value = TimedValue(TIME_TO_WAIT)
-                count += 1
-            if count > STUDENT_PHOTOS:
-                train()
-            yield(b'--frame\r\n'
-                b'Content-Type: image/jpeg\r\n\r\n' + image + b'\r\n\r\n')
-        elif not CameraAction.cam:
-            blank_image = create_blank(500, 500, (250,250,250)) 
-            yield(b'--frame\r\n'
-                b'Content-Type: image/jpeg\r\n\r\n' + blank_image +  b'\r\n\r\n')
-        elif count > STUDENT_PHOTOS:
-            CameraAction.cam = None
-            CameraAction.IS_STOP = True
-            blank_image = create_blank(500, 500, (250,250,250)) 
-            yield(b'--frame\r\n'
-                b'Content-Type: image/jpeg\r\n\r\n' + blank_image +  b'\r\n\r\n')
-        else:
-            frame = CameraAction.cam.get_frame_as_image()
-            ret, jpeg = cv2.imencode('.jpg', frame)
-            yield(b'--frame\r\n'
-                b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() +  b'\r\n\r\n')
+class SetCurrentStudentToAdd(View):
+    def post(self, request):
+        student_id = int(post_parameter(request, "student_id"))
+        CameraAction.current_student = Student.objects.filter(id=student_id).first()
+        return JsonResponse({"success": "ok"})  
 
-@gzip_page
-def add_student_stream(request):
-    try:
-        return StreamingHttpResponse(gen_student(), content_type="multipart/x-mixed-replace;boundary=frame")
-    except: 
-        pass
+class Train(View):
+    def post(self, request):
+        train()
+        return JsonResponse({"success": "ok"})
 
 class AddStudentStreamView(View):
     def get(self, request):
-        CameraAction.IS_STOP = True
         return render(request, 'add_student.html', {
             "user" : get_current_user(request),
             "nomargin": True,
             "TIME_TO_WAIT": TIME_TO_WAIT,
         })
+    def post(self, request):
+        str_img = post_parameter(request, "image")
+        count = int(post_parameter(request, "count"))
 
+        img = from_base64(str_img.split(",")[1])
+        is_added, img = add_student(img, CameraAction.current_student, count)
 
-def gen():
-    while True:
-        if not CameraAction.IS_STOP:
-            frame = CameraAction.cam.get_frame_as_image()
-            image = recognise_face(frame)
-            yield(b'--frame\r\n'
-                b'Content-Type: image/jpeg\r\n\r\n' + image + b'\r\n\r\n')
-        else:
-            blank_image = create_blank(500, 500, (255,255,255))
-            yield(b'--frame\r\n'
-                b'Content-Type: image/jpeg\r\n\r\n' + blank_image +  b'\r\n\r\n')
-
-@gzip_page
-def live_stream(request):
-    try:
-        return StreamingHttpResponse(gen(), content_type="multipart/x-mixed-replace;boundary=frame")
-    except: 
-        pass
+        return JsonResponse({"image": str(img), "is_added": str(is_added)})  
 
 class StreamView(View):
     def get(self, request):
@@ -281,36 +244,30 @@ class StreamView(View):
             "nomargin": True,
         })
 
-class StartStopStream(View):
+
+
+class RecognizeFace(View):
     def post(self, request):
-        is_stop = post_parameter(request, "is_stop")
-        if is_stop == "true":
-            if CameraAction.cam:
-                CameraAction.IS_STOP = True
-                del CameraAction.cam
-        elif is_stop == "false":
-            if not CameraAction.cam:
-                CameraAction.cam = Camera()
-                CameraAction.IS_STOP = False
-        return JsonResponse({"success": "true"})
+        str_img = post_parameter(request, "image")
+        #img = stringToImage(str_img.split(",")[1])
+        #recognized_image = recognise_face(np.array(img))
+        img = from_base64(str_img.split(",")[1])
+        recognized_image = recognise_face(img)
+        
+        
+        return JsonResponse({"image": str(recognized_image)})
 
 
 class StartStudentStream(View):
     def post(self, request):
         email = post_parameter(request, "email")
         fullname = post_parameter(request, "fullname")
-        parent_number = post_parameter(request, "parent_number")
-        parent_telegram = post_parameter(request, "parent_telegram")
         group = post_parameter(request, "group")
         course = post_parameter(request, "course")
 
         if len(Student.objects.filter(email=email)) > 0:
             return JsonResponse({"error": "Такой пользователь уже существует!"})        
         
-        student  = Student.objects.create(email=email, fullname=fullname, parent_number=parent_number, parent_telegram=parent_telegram, group=group, course=course)
-        CameraAction.current_student = student
-        
-        CameraAction.cam = Camera()
-        CameraAction.IS_STOP = False
+        student  = Student.objects.create(email=email, fullname=fullname, group=group, course=course)
 
-        return JsonResponse({"success": "true"})
+        return JsonResponse({"success": "true", "student_id": student.id})
