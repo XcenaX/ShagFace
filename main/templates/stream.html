@@ -36,7 +36,10 @@
         var img = document.getElementById('img_stream');
         // request access to webcam
         var is_stop_stream = true;
-        navigator.mediaDevices.getUserMedia({video: {video:true, audio:false}}).then(function(stream){video.srcObject = stream; });
+
+        const initVideo = () => {
+            navigator.mediaDevices.getUserMedia({video: {video:true, audio:false}}).then(function(stream){video.srcObject = stream; });
+        }
         const canvas = document.createElement('canvas');
         // returns a frame encoded in base64
         const getFrame = () => {
@@ -71,6 +74,7 @@
         $("#start").on("click", function(){
             is_stop_stream = false;
             img.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=";
+            initVideo()
             video.play();
             stream_interval = setInterval(function(){
                 if(!is_stop_stream){
@@ -83,8 +87,8 @@
         })
 
         $("#stop").on("click", function(){
-            video.pause();
             is_stop_stream = true;
+            video.srcObject.getTracks().forEach(track => track.stop())
             img.src = "{% static 'images/white.png'%}";     
         })
     </script>

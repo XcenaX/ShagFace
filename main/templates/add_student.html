@@ -83,15 +83,19 @@
 
 {% block scripts %}
     <script type="text/javascript">
-        const FPS = 10;
+        const FPS = 5;
         const video = document.getElementById('video');
         const img = document.getElementById('stream');
         const face_position = document.getElementById("face_position");
 
         const numbers = [];
 
-        navigator.mediaDevices.getUserMedia({video: {video:true, audio:false}}).then(function(stream){video.srcObject = stream; });
+        
         const canvas = document.createElement('canvas');
+
+        const initVideo = () => {
+            navigator.mediaDevices.getUserMedia({video: {video:true, audio:false}}).then(function(stream){video.srcObject = stream; });
+        }
 
         const getFrame = () => {
             canvas.width = video.videoWidth;
@@ -180,6 +184,7 @@
         }
 
         function start_stream(){
+            initVideo();
             video.play();
             stream_interval = setInterval(function(){
                 var is_paused = document.getElementById('is_paused').textContent;
@@ -187,8 +192,8 @@
                     if(parseInt(document.getElementById('count').textContent) <= 5){
                     send_image();
                     } else{
-                        video.pause();
                         clearInterval(stream_interval);
+                        video.srcObject.getTracks().forEach(track => track.stop())
                         img.src = "{% static 'images/white.png'%}";
                         train()
                         alert("Студент успешно добавлен");
