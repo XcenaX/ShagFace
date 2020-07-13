@@ -12,11 +12,12 @@ urlpatterns = [
     path('add_security', views.AddSecurity.as_view(), name="add_security"),
     path('delete_security', views.DeleteSecurity.as_view(), name="delete_security"),
     path('delete_student', views.DeleteStudent.as_view(), name="delete_student"),
+    path('stream', views.live_stream, name="stream"),
+    path('student_stream', views.add_student_stream, name="student_stream"),
     path('show_stream', views.StreamView.as_view(), name="show_stream"),
     path('add_student', views.AddStudentStreamView.as_view(), name="add_student"),
+    path('start_stop_stream', views.StartStopStream.as_view(), name="start_stop_stream"),
     path('start_student_stream', views.StartStudentStream.as_view(), name="start_student_stream"),
-    path('recognize_face', views.RecognizeFace.as_view(), name="recognize_face"),
     path('download/(?P<path>.*)$', views.Download.as_view(), name="download"),
-    path('set_current_student', views.SetCurrentStudentToAdd.as_view(), name="set_current_student"),
-    path('train', views.Train.as_view(), name="train"),
+
 ]

@@ -15,6 +15,9 @@ class Camera(object):
     def __del__(self):
         self.video.release()
 
+    def stop(self):
+        self.video.release()
+
     def getCameraIndexes(self):
         index = 0
         arr = []

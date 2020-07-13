@@ -17,8 +17,6 @@
 {% block content %}
 
     <span class="title-text">Добавить студента</span>
-    <span style="display:none;" id="count">1</span>
-    <span style="display:none;" id="is_paused">false</span>
 
     <div class="col-xl-6 col-sm-12">
         <div class="form-group">
@@ -37,7 +35,6 @@
                 </div>                                            
             </div>
         </div>
-        
         <div class="form-group">
             <div class="wrap-input100 validate-input m-b-16 col-xl-12 col-sm-12 p-0">                                           
                 <div class="card shadow-sm x-shadow-fade-in">
@@ -66,8 +63,7 @@
         
 
         <div class="form-group">
-            <img style="-webkit-user-select: none;" class="cam-stream-student" id="stream" >     
-            <video id="video" style="display:none;">       
+            <img style="-webkit-user-select: none;" class="cam-stream-student" id="stream" src="{% static "images/white.png"%}">            
         </div>
 
         <div class="form-group">
@@ -82,128 +78,13 @@
 {% endblock %}
 
 {% block scripts %}
+    <script type="text/javascript" src="{%static "js/stream.js"%}"></script>
     <script type="text/javascript">
-        const FPS = 5;
-        const video = document.getElementById('video');
-        const img = document.getElementById('stream');
-        const face_position = document.getElementById("face_position");
-
-        const numbers = [];
-
-        
-        const canvas = document.createElement('canvas');
-
-        const initVideo = () => {
-            navigator.mediaDevices.getUserMedia({video: {video:true, audio:false}}).then(function(stream){video.srcObject = stream; });
+        function sleep(sec) {
+           return new Promise(resolve => setTimeout(resolve, sec*1000));
         }
 
-        const getFrame = () => {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height)
-            const data = canvas.toDataURL('image/png');
-            return data;
-        }
-
-        
-        
-
-        function send_image(){
-            $.ajax({
-                url: '{% url "main:add_student"%}',
-                data: {
-                'csrfmiddlewaretoken': $('input[name="csrfmiddlewaretoken"]').val(),
-                'image': getFrame(),
-                "count": document.getElementById('count').textContent,
-                },
-                async: false,
-                type: "POST",
-                dataType: 'json',
-                success: function (data) {
-                    var IS_ADDED = data["is_added"];
-                    if(IS_ADDED == "True"){
-                        face_position.src = "/static/preview_faces/face" + document.getElementById('count').textContent + ".jpg";
-                        var count = parseInt(document.getElementById('count').textContent);
-                        if(!numbers.includes(count)){
-                            numbers.push(count);
-                        }
-                        count++;
-                        document.getElementById('count').textContent = count;
-                        document.getElementById('is_paused').textContent = "true";
-                        window.setTimeout(function () {
-                           document.getElementById('is_paused').textContent = "false";
-                        }, 3000);
-                    }
-                    img.src = "data:image/jpg;base64," + data["image"].split("'")[1]
-                    //img.src = getFrame();
-                }
-            });
-            
-        }
-
-        function recognize_face(){
-            $.ajax({
-                url: '{% url "main:recognize_face"%}',
-                data: {
-                'csrfmiddlewaretoken': $('input[name="csrfmiddlewaretoken"]').val(),
-                'image': getFrame()
-                },
-                type: "POST",
-                dataType: 'json',
-                success: function (data) {
-                    
-                    img.src = "data:image/png;base64," + data["image"].split("'")[1]
-                    //img.src = getFrame();
-                }
-            });
-        }
-
-        function train(){
-            $.ajax({
-                url: '{% url "main:train"%}',
-                data: {
-                'csrfmiddlewaretoken': $('input[name="csrfmiddlewaretoken"]').val(),
-                },
-                type: "POST",
-                dataType: 'json',
-                "async": false
-            });
-        }
-
-        function set_current_student(student_id){
-            var is_added;
-            $.ajax({
-                url: '{% url "main:set_current_student"%}',
-                data: {
-                'csrfmiddlewaretoken': $('input[name="csrfmiddlewaretoken"]').val(),
-                "student_id": student_id
-                },
-                type: "POST",
-                dataType: 'json'
-            });
-        }
-
-        function start_stream(){
-            initVideo();
-            video.play();
-            stream_interval = setInterval(function(){
-                var is_paused = document.getElementById('is_paused').textContent;
-                if(is_paused === "false" && !numbers.includes(parseInt(document.getElementById('count').textContent))){
-                    if(parseInt(document.getElementById('count').textContent) <= 5){
-                    send_image();
-                    } else{
-                        clearInterval(stream_interval);
-                        video.srcObject.getTracks().forEach(track => track.stop())
-                        img.src = "{% static 'images/white.png'%}";
-                        train()
-                        alert("Студент успешно добавлен");
-                        document.getElementById('count').textContent = "1"
-                    }
-                } else{
-                    recognize_face();
-                }
-            }, 1000/FPS);
-        }
+        const img = document.getElementById("stream");
         
 
         $("#start").on("click", function(){
@@ -232,10 +113,15 @@
                     if(data["error"]){
                         alert(data["error"])
                     }else{
-                        student_id = data["student_id"];
-                        img.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=";
-                        set_current_student(student_id);
-                        start_stream();
+                        img.src = '{% url "main:student_stream"%}';
+                        await sleep(1)
+                        for(var i = 1; i <= 4; i++){
+                            $("#face_position")[0].src = "http://127.0.0.1:8000/static/preview_faces/face" + i + ".jpg"
+                            await sleep({{TIME_TO_WAIT}})
+                        }
+                        await sleep(1);
+                        $("#face_position")[0].src = "{% static "preview_faces/face1.jpg"%}";
+                        img.src = "{% static "images/white.png"%}";
                     }
                 }
             });
