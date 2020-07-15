@@ -257,10 +257,14 @@ class AddStudentStreamView(View):
 def gen():
     while True:
         if not CameraAction.IS_STOP:
-            frame = CameraAction.cam.get_frame_as_image()
-            image = recognise_face(frame)
-            yield(b'--frame\r\n'
-                b'Content-Type: image/jpeg\r\n\r\n' + image + b'\r\n\r\n')
+            try:
+                frame = CameraAction.cam.get_frame_as_image()
+                image = recognise_face(frame)
+                yield(b'--frame\r\n'
+                    b'Content-Type: image/jpeg\r\n\r\n' + image + b'\r\n\r\n')
+            except:
+                yield(b'--frame\r\n'
+                    b'Content-Type: image/jpeg\r\n\r\n' + create_blank(500, 500, (250,250,250)) + b'\r\n\r\n')
 
 @gzip_page
 def live_stream(request):
@@ -283,6 +287,7 @@ class StartStopStream(View):
             if CameraAction.cam:
                 CameraAction.IS_STOP = True
                 CameraAction.cam.stop()
+                CameraAction.cam = None
         elif is_stop == "false":
             if not CameraAction.cam:
                 CameraAction.cam = Camera()

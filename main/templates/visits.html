@@ -43,7 +43,7 @@
         <tr>
         <td>{{item.student.fullname}}</td>
         <td>{{item.student.group}}</td>
-        <td>{{item.visit_time}}</td>
+        <td>{{item.visit_time|date:'Y-m-d H:i'}}</td>
         </tr>
         {% endfor %}
     </tbody>

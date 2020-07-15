@@ -6,6 +6,7 @@ from ..models import Security, Student, Visit, Face, BotUser
 import pathlib
 import datetime
 from PIL import ImageFont, ImageDraw, Image
+import pytz
 
 uppath = lambda _path, n: os.sep.join(_path.split(os.sep)[:-n])
 
@@ -62,18 +63,18 @@ def recognise_face(img):
         student_id, confidence = recognizer.predict(gray[y:y + h, x:x + w])
         label = "unknown"
         # Проверяем что лицо распознано
-        if (confidence > 85 and confidence < 105):
+        if (confidence > 40 and confidence < 100):
             b,g,r,a = 255,255,255,1
             student = Student.objects.filter(id=student_id).first()
 
             date_start = datetime.datetime.now()
-            date_start = date_start.replace(hour=0, minute=0)
+            date_start = date_start.replace(hour=0, minute=0, second=0)
 
             date_end = datetime.datetime.now()
-            date_end = date_start.replace(hour=23, minute=59)
+            date_end = date_start.replace(hour=23, minute=59, second=59)
 
             visits = Visit.objects.filter(visit_time__gte=date_start, visit_time__lte=date_end, student=student)
-            if len(visits) == 0:
+            if len(visits) == 0 and student:
                 Visit.objects.create(student=student)
 
                 if len(BotUser.objects.filter(student=student)) > 0:
@@ -92,7 +93,6 @@ def recognise_face(img):
             img = np.array(img_pil)
             
             confidence = "  {0}%".format(round(100 - confidence))
-        print(confidence)
         #cv2.putText(img, str(confidence), (x + 5, y + h - 5), font, 1, (255, 255, 0), 1)
     ret, jpeg = cv2.imencode('.jpg', img)
     return jpeg.tobytes()

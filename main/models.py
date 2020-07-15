@@ -25,7 +25,7 @@ class Security(models.Model):
 
 class Visit(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    visit_time = models.DateTimeField(auto_now_add=True)
+    visit_time = models.DateTimeField(default=timezone.localtime(timezone.now()))
     def __str__(self):
         return self.student.fullname
 
