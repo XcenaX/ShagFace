@@ -159,3 +159,10 @@ def delete_images(student):
     for face in student.images_urls.all():
         os.remove(face.absolute_path)
         face.delete()
+
+
+def clear_face_uml():
+    recognizer_path = str(pathlib.Path(__file__).parent.absolute()) + "/face.yml"
+    file = open(recognizer_path, "w")
+    file.truncate(0)
+    file.close()

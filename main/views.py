@@ -189,6 +189,10 @@ class DeleteStudent(View):
             })
         delete_images(student)
         student.delete()
+        if len(Student.objects.all()) == 0:
+            clear_face_uml()
+        else:
+            train()
         return render(request, 'delete_student.html', {
             "success" : "Вы успешно удалили студента!",
             "students": Student.objects.all()
